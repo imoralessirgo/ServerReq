@@ -1,4 +1,4 @@
-C = gcc
+CC = gcc
 CFLAGS = -g -std=gnu99
 THRD = -lpthread
 
