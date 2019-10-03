@@ -2,17 +2,21 @@
 #include <sys/types.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcnt1.h>
+#include <fcntl.h>
 #include "helper.h"
 
 struct stat currFile;
 int badFiles = 0;
 int numDir = 0;
+int numAllText = 0;
 int regFiles = 0;
 int specialFiles = 0;
 off_t size = 0;
+off_t sizeText = 0;
+int textFlag = 0;
 
 
 
@@ -32,9 +36,16 @@ void main(int argc, char* argv[]){
 			regFiles++;
 			size += currFile.st_size;
 			char newBuff[currFile.st_size];
-			int index = open(newBuff,O_RDONLY)
-			while(read(open(buff,O_RDONLY),buff,BUFFSIZE)){
-				re
+			int index = open(newBuff,O_RDONLY);
+			if(read(index,newBuff,currFile.st_size)){
+				for(off_t i = 0;i<currFile.st_size;i++){
+					if(!isspace(newBuff[i]) && !isprint(newBuff[i])){
+						textFlag = 1;
+						break;
+					}
+					textFlag = 0;
+				}
+				if(!textFlag){numAllText++;sizeText += currFile.st_size;}
 			}		
 	
 		}else{
@@ -42,7 +53,7 @@ void main(int argc, char* argv[]){
 		}
 	}
 
-	printf("bad: %d, dir: %d, reg: %d, size: %lld, special: %d\n",badFiles,numDir,regFiles,size,specialFiles);
+	printf("bad: %d, dir: %d, reg: %d, size: %lld, textOnly: %d, special: %d\n",badFiles,numDir,regFiles,size,numAllText,specialFiles);
 
 
 }
