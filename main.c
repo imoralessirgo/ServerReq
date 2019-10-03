@@ -46,8 +46,8 @@ void main(int argc, char* argv[]){
 					textFlag = 0;
 				}
 				if(!textFlag){numAllText++;sizeText += currFile.st_size;}
-			}		
-	
+			}
+			close(index); 			
 		}else{
 			specialFiles++;
 		}
