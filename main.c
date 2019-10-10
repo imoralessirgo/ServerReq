@@ -36,7 +36,6 @@ void* threadFunction(void* arg){
 	sem_wait(&mutex);	
 	handleFile(fileName);
 	sem_post(&mutex);
-	free(arg);
 }
 
 
@@ -80,11 +79,14 @@ void main(int argc, char* argv[]){
 		}
 	}else if(argc == 3 && !strcmp(argv[1],"thread")){
 		actualThreads = atoi(argv[2]);
+		if(actualThreads < 1) { printf("Invalid number of threads. Terminating...\n"); exit(0);}
+		if(actualThreads > MAXTHREAD) {printf("Max number of threads exceeded. Set to 15 by default.\n");actualThreads = 15;}
 		int count = 0;
                 while(fgets(buff,100,stdin) != NULL){
                         char* fileName = (char*) malloc(strlen(buff));
                         sscanf(buff,"%s",fileName);
-                        if(count < actualThreads){
+                        printf("file %s and thread %d\n",fileName,count);
+			if(count < actualThreads){
 				pthread_create(&threadID[count],NULL,threadFunction,(void *)fileName);
 			} else{ //assume the number of files that will be given as input will never be larger than an int
 				pthread_join(threadID[count%actualThreads],NULL);// wait for available thread (oldest one)	
