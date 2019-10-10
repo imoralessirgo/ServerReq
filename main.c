@@ -26,6 +26,8 @@ sem_t mutex;
 #define BUFFSIZE 1024
 #define MAXTHREAD 15
 
+int actualThreads = 0;
+
 pthread_t threadID[MAXTHREAD];
 void handleFile(char*);
 
@@ -34,6 +36,7 @@ void* threadFunction(void* arg){
 	sem_wait(&mutex);	
 	handleFile(fileName);
 	sem_post(&mutex);
+	free(arg);
 }
 
 
@@ -57,8 +60,7 @@ void handleFile(char* fileName){
                                                 textFlag = 0;
                                         }
                                 }
-				if(!textFlag){printf("%s\n",fileName); numAllText++;sizeText += currFile.
-st_size;}
+				if(!textFlag){numAllText++;sizeText += currFile.st_size;}
                                 close(index);
 			}
 	}else{specialFiles++;}	
@@ -70,10 +72,38 @@ void main(int argc, char* argv[]){
 	char buff[100] = "";	
 	sem_init(&mutex,0,1);
 	//sem_init(&fileName,0,1);
-	while(fgets(buff,100,stdin) != NULL){
-		char* fileName = (char*) malloc(strlen(buff));
-		sscanf(buff,"%s",fileName);
-		handleFile(fileName);			
+	if(argc == 1){
+		while(fgets(buff,100,stdin) != NULL){
+			char* fileName = (char*) malloc(strlen(buff));
+			sscanf(buff,"%s",fileName);
+			handleFile(fileName);			
+		}
+	}else if(argc == 3 && !strcmp(argv[1],"thread")){
+		actualThreads = atoi(argv[2]);
+		int count = 0;
+                while(fgets(buff,100,stdin) != NULL){
+                        char* fileName = (char*) malloc(strlen(buff));
+                        sscanf(buff,"%s",fileName);
+                        if(count < actualThreads){
+				pthread_create(&threadID[count],NULL,threadFunction,(void *)fileName);
+			} else{ //assume the number of files that will be given as input will never be larger than an int
+				pthread_join(threadID[count%actualThreads],NULL);// wait for available thread (oldest one)	
+				pthread_create(&threadID[count%actualThreads],NULL,threadFunction,(void *)fileName); // replace thread
+			}
+			count++;
+		}
+		if(count < actualThreads){
+                        for(int i=0;i<count;i++){
+                                pthread_join(threadID[i],NULL);// wait for each thread to terminate
+                        }			
+		}else{
+			for(int i=0;i<actualThreads;i++){
+				pthread_join(threadID[i],NULL);// wait for each thread to terminate
+			}
+		}	
+	}else{
+		printf("Incorrect command line arguments. Terminating...\n");
+		exit(0);
 	}
 	sem_destroy(&mutex);
 	printf("Bad Files: %d\n",badFiles);
@@ -84,6 +114,4 @@ void main(int argc, char* argv[]){
 	printf("Text Files: %d\n",numAllText);
 	printf("Text File Bytes: %lld\n",sizeText);
 	//printf("bad: %d, dir: %d, reg: %d, size: %lld, textOnly: %d, textSize: %lld, special: %d\n",badFiles,numDir,regFiles,size,numAllText,sizeText,specialFiles);
-
-
 }
