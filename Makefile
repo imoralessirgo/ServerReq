@@ -4,7 +4,7 @@ THRD = -lpthread
 
 
 all:
-	$(CC) $(CFLAGS) main.c -o server
+	$(CC) $(CFLAGS) main.c -o server $(THRD)
 
 clean:
 	rm server *.o
